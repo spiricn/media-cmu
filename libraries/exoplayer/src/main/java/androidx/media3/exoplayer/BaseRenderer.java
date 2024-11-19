@@ -18,6 +18,7 @@ package androidx.media3.exoplayer;
 import static androidx.media3.common.util.Assertions.checkNotNull;
 import static java.lang.Math.max;
 
+import android.util.Log;
 import androidx.annotation.GuardedBy;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
@@ -39,7 +40,9 @@ import androidx.media3.exoplayer.source.SampleStream.ReadFlags;
 import java.io.IOException;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-/** An abstract base class suitable for most {@link Renderer} implementations. */
+/**
+ * An abstract base class suitable for most {@link Renderer} implementations.
+ */
 @UnstableApi
 public abstract class BaseRenderer implements Renderer, RendererCapabilities {
 
@@ -47,13 +50,16 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
   private final @C.TrackType int trackType;
   private final FormatHolder formatHolder;
 
-  @Nullable private RendererConfiguration configuration;
+  @Nullable
+  private RendererConfiguration configuration;
   private int index;
   private @MonotonicNonNull PlayerId playerId;
   private @MonotonicNonNull Clock clock;
   private int state;
-  @Nullable private SampleStream stream;
-  @Nullable private Format[] streamFormats;
+  @Nullable
+  private SampleStream stream;
+  @Nullable
+  private Format[] streamFormats;
   private long streamOffsetUs;
   private long lastResetPositionUs;
   private long readingPositionUs;
@@ -67,7 +73,7 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
 
   /**
    * @param trackType The track type that the renderer handles. One of the {@link C} {@code
-   *     TRACK_TYPE_*} constants.
+   *                  TRACK_TYPE_*} constants.
    */
   public BaseRenderer(@C.TrackType int trackType) {
     lock = new Object();
@@ -264,7 +270,9 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
 
   // Methods to be overridden by subclasses.
 
-  /** Called when the renderer is initialized. */
+  /**
+   * Called when the renderer is initialized.
+   */
   protected void onInit() {
     // Do nothing
   }
@@ -274,9 +282,9 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
    *
    * <p>The default implementation is a no-op.
    *
-   * @param joining Whether this renderer is being enabled to join an ongoing playback.
+   * @param joining                Whether this renderer is being enabled to join an ongoing playback.
    * @param mayRenderStartOfStream Whether this renderer is allowed to render the start of the
-   *     stream even if the state is not {@link #STATE_STARTED} yet.
+   *                               stream even if the state is not {@link #STATE_STARTED} yet.
    * @throws ExoPlaybackException If an error occurs.
    */
   protected void onEnabled(boolean joining, boolean mayRenderStartOfStream)
@@ -291,12 +299,12 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
    *
    * <p>The default implementation is a no-op.
    *
-   * @param formats The enabled formats.
+   * @param formats         The enabled formats.
    * @param startPositionUs The start position of the new stream in renderer time (microseconds).
-   * @param offsetUs The offset that will be added to the timestamps of buffers read via {@link
-   *     #readSource} so that decoder input buffers have monotonically increasing timestamps.
-   * @param mediaPeriodId The {@link MediaSource.MediaPeriodId} of the {@link MediaPeriod} that
-   *     produces the stream.
+   * @param offsetUs        The offset that will be added to the timestamps of buffers read via {@link
+   *                        #readSource} so that decoder input buffers have monotonically increasing timestamps.
+   * @param mediaPeriodId   The {@link MediaSource.MediaPeriodId} of the {@link MediaPeriod} that
+   *                        produces the stream.
    * @throws ExoPlaybackException If an error occurs.
    */
   protected void onStreamChanged(
@@ -319,7 +327,7 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
    * <p>The default implementation is a no-op.
    *
    * @param positionUs The new playback position in microseconds.
-   * @param joining Whether this renderer is being enabled to join an ongoing playback.
+   * @param joining    Whether this renderer is being enabled to join an ongoing playback.
    * @throws ExoPlaybackException If an error occurs.
    */
   protected void onPositionReset(long positionUs, boolean joining) throws ExoPlaybackException {
@@ -394,7 +402,9 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
     return lastResetPositionUs;
   }
 
-  /** Returns a clear {@link FormatHolder}. */
+  /**
+   * Returns a clear {@link FormatHolder}.
+   */
   protected final FormatHolder getFormatHolder() {
     formatHolder.clear();
     return formatHolder;
@@ -447,7 +457,9 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
     return checkNotNull(clock);
   }
 
-  /** Returns the current {@link Timeline} containing the rendered stream. */
+  /**
+   * Returns the current {@link Timeline} containing the rendered stream.
+   */
   protected final Timeline getTimeline() {
     return timeline;
   }
@@ -456,12 +468,12 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
    * Creates an {@link ExoPlaybackException} of type {@link ExoPlaybackException#TYPE_RENDERER} for
    * this renderer.
    *
-   * @param cause The cause of the exception.
-   * @param format The current format used by the renderer. May be null.
+   * @param cause     The cause of the exception.
+   * @param format    The current format used by the renderer. May be null.
    * @param errorCode A {@link PlaybackException.ErrorCode} to identify the cause of the playback
-   *     failure.
+   *                  failure.
    * @return The created instance, in which {@link ExoPlaybackException#isRecoverable} is {@code
-   *     false}.
+   * false}.
    */
   protected final ExoPlaybackException createRendererException(
       Throwable cause, @Nullable Format format, @PlaybackException.ErrorCode int errorCode) {
@@ -472,11 +484,11 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
    * Creates an {@link ExoPlaybackException} of type {@link ExoPlaybackException#TYPE_RENDERER} for
    * this renderer.
    *
-   * @param cause The cause of the exception.
-   * @param format The current format used by the renderer. May be null.
+   * @param cause         The cause of the exception.
+   * @param format        The current format used by the renderer. May be null.
    * @param isRecoverable If the error is recoverable by disabling and re-enabling the renderer.
-   * @param errorCode A {@link PlaybackException.ErrorCode} to identify the cause of the playback
-   *     failure.
+   * @param errorCode     A {@link PlaybackException.ErrorCode} to identify the cause of the playback
+   *                      failure.
    * @return The created instance.
    */
   protected final ExoPlaybackException createRendererException(
@@ -509,22 +521,25 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
    * #STATE_ENABLED}, {@link #STATE_STARTED}.
    *
    * @param formatHolder A {@link FormatHolder} to populate in the case of reading a format.
-   * @param buffer A {@link DecoderInputBuffer} to populate in the case of reading a sample or the
-   *     end of the stream. If the end of the stream has been reached, the {@link
-   *     C#BUFFER_FLAG_END_OF_STREAM} flag will be set on the buffer.
-   * @param readFlags Flags controlling the behavior of this read operation.
+   * @param buffer       A {@link DecoderInputBuffer} to populate in the case of reading a sample or the
+   *                     end of the stream. If the end of the stream has been reached, the {@link
+   *                     C#BUFFER_FLAG_END_OF_STREAM} flag will be set on the buffer.
+   * @param readFlags    Flags controlling the behavior of this read operation.
    * @return The {@link ReadDataResult result} of the read operation.
    * @throws InsufficientCapacityException If the {@code buffer} has insufficient capacity to hold
-   *     the data of a sample being read. The buffer {@link DecoderInputBuffer#timeUs timestamp} and
-   *     flags are populated if this exception is thrown, but the read position is not advanced.
+   *                                       the data of a sample being read. The buffer {@link DecoderInputBuffer#timeUs timestamp} and
+   *                                       flags are populated if this exception is thrown, but the read position is not advanced.
    */
   protected final @ReadDataResult int readSource(
       FormatHolder formatHolder, DecoderInputBuffer buffer, @ReadFlags int readFlags) {
     @ReadDataResult
     int result = Assertions.checkNotNull(stream).readData(formatHolder, buffer, readFlags);
+    Log.e("ppp", " " + result + " " + formatHolder.format + " ->" + stream);
+
     if (result == C.RESULT_BUFFER_READ) {
       if (buffer.isEndOfStream()) {
         readingPositionUs = C.TIME_END_OF_SOURCE;
+
         return streamIsFinal ? C.RESULT_BUFFER_READ : C.RESULT_NOTHING_READ;
       }
       buffer.timeUs += streamOffsetUs;
@@ -567,7 +582,9 @@ public abstract class BaseRenderer implements Renderer, RendererCapabilities {
     return hasReadStreamToEnd() ? streamIsFinal : Assertions.checkNotNull(stream).isReady();
   }
 
-  /** Called when the renderer capabilities are changed. */
+  /**
+   * Called when the renderer capabilities are changed.
+   */
   protected final void onRendererCapabilitiesChanged() {
     @Nullable RendererCapabilities.Listener listener;
     synchronized (lock) {

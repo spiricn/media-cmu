@@ -73,15 +73,19 @@ import java.util.Map;
 import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 
-/** A {@link MediaPeriod} that extracts data using an {@link Extractor}. */
+/**
+ * A {@link MediaPeriod} that extracts data using an {@link Extractor}.
+ */
 /* package */ final class ProgressiveMediaPeriod
     implements MediaPeriod,
-        ExtractorOutput,
-        Loader.Callback<ProgressiveMediaPeriod.ExtractingLoadable>,
-        Loader.ReleaseCallback,
-        UpstreamFormatChangedListener {
+    ExtractorOutput,
+    Loader.Callback<ProgressiveMediaPeriod.ExtractingLoadable>,
+    Loader.ReleaseCallback,
+    UpstreamFormatChangedListener {
 
-  /** Listener for information about the period. */
+  /**
+   * Listener for information about the period.
+   */
   interface Listener {
 
     /**
@@ -90,7 +94,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
      *
      * @param durationUs The duration of the period, or {@link C#TIME_UNSET}.
      * @param isSeekable Whether the period is seekable.
-     * @param isLive Whether the period is live.
+     * @param isLive     Whether the period is live.
      */
     void onSourceInfoRefreshed(long durationUs, boolean isSeekable, boolean isLive);
   }
@@ -116,7 +120,8 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
   private final DrmSessionEventListener.EventDispatcher drmEventDispatcher;
   private final Listener listener;
   private final Allocator allocator;
-  @Nullable private final String customCacheKey;
+  @Nullable
+  private final String customCacheKey;
   private final long continueLoadingCheckIntervalBytes;
   private final long singleSampleDurationUs;
   private final Loader loader;
@@ -126,8 +131,10 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
   private final Runnable onContinueLoadingRequestedRunnable;
   private final Handler handler;
 
-  @Nullable private Callback callback;
-  @Nullable private IcyHeaders icyHeaders;
+  @Nullable
+  private Callback callback;
+  @Nullable
+  private IcyHeaders icyHeaders;
   private SampleQueue[] sampleQueues;
   private TrackId[] sampleQueueTrackIds;
   private boolean sampleQueuesBuilt;
@@ -155,22 +162,22 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
   private boolean released;
 
   /**
-   * @param uri The {@link Uri} of the media stream.
-   * @param dataSource The data source to read the media.
-   * @param progressiveMediaExtractor The {@link ProgressiveMediaExtractor} to use to read the data
-   *     source.
-   * @param drmSessionManager A {@link DrmSessionManager} to allow DRM interactions.
-   * @param drmEventDispatcher A dispatcher to notify of {@link DrmSessionEventListener} events.
-   * @param loadErrorHandlingPolicy The {@link LoadErrorHandlingPolicy}.
-   * @param mediaSourceEventDispatcher A dispatcher to notify of {@link MediaSourceEventListener}
-   *     events.
-   * @param listener A listener to notify when information about the period changes.
-   * @param allocator An {@link Allocator} from which to obtain media buffer allocations.
-   * @param customCacheKey A custom key that uniquely identifies the original stream. Used for cache
-   *     indexing. May be null.
+   * @param uri                               The {@link Uri} of the media stream.
+   * @param dataSource                        The data source to read the media.
+   * @param progressiveMediaExtractor         The {@link ProgressiveMediaExtractor} to use to read the data
+   *                                          source.
+   * @param drmSessionManager                 A {@link DrmSessionManager} to allow DRM interactions.
+   * @param drmEventDispatcher                A dispatcher to notify of {@link DrmSessionEventListener} events.
+   * @param loadErrorHandlingPolicy           The {@link LoadErrorHandlingPolicy}.
+   * @param mediaSourceEventDispatcher        A dispatcher to notify of {@link MediaSourceEventListener}
+   *                                          events.
+   * @param listener                          A listener to notify when information about the period changes.
+   * @param allocator                         An {@link Allocator} from which to obtain media buffer allocations.
+   * @param customCacheKey                    A custom key that uniquely identifies the original stream. Used for cache
+   *                                          indexing. May be null.
    * @param continueLoadingCheckIntervalBytes The number of bytes that should be loaded between each
-   *     invocation of {@link Callback#onContinueLoadingRequested(SequenceableLoader)}.
-   * @param singleSampleDurationUs The duration of media with a single sample in microseconds.
+   *                                          invocation of {@link Callback#onContinueLoadingRequested(SequenceableLoader)}.
+   * @param singleSampleDurationUs            The duration of media with a single sample in microseconds.
    */
   // maybeFinishPrepare is not posted to the handler until initialization completes.
   @SuppressWarnings({"nullness:argument", "nullness:methodref.receiver.bound"})
@@ -498,15 +505,20 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
       FormatHolder formatHolder,
       DecoderInputBuffer buffer,
       @ReadFlags int readFlags) {
+
+    Log.e("ppp", "1");
     if (suppressRead()) {
+      Log.e("ppp", "2");
       return C.RESULT_NOTHING_READ;
     }
     maybeNotifyDownstreamFormat(sampleQueueIndex);
     int result =
         sampleQueues[sampleQueueIndex].read(formatHolder, buffer, readFlags, loadingFinished);
     if (result == C.RESULT_NOTHING_READ) {
+      Log.e("media period", hashCode() + "NOTHING READ " + sampleQueues[sampleQueueIndex].hashCode());
       maybeStartDeferredRetry(sampleQueueIndex);
     }
+    Log.e("media period", hashCode() + "read from " + sampleQueues[sampleQueueIndex].hashCode());
     return result;
   }
 
@@ -865,11 +877,11 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
   /**
    * Called to configure a retry when a load error occurs.
    *
-   * @param loadable The current loadable for which the error was encountered.
+   * @param loadable                    The current loadable for which the error was encountered.
    * @param currentExtractedSampleCount The current number of samples that have been extracted into
-   *     the sample queues.
+   *                                    the sample queues.
    * @return Whether the loader should retry with the current loadable. False indicates a deferred
-   *     retry.
+   * retry.
    */
   private boolean configureRetry(ExtractingLoadable loadable, int currentExtractedSampleCount) {
     if (isLengthKnown || (seekMap != null && seekMap.getDurationUs() != C.TIME_UNSET)) {
@@ -909,7 +921,7 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
    * Attempts to seek to the specified position within the sample queues.
    *
    * @param trackIsAudioVideoFlags Whether each track is audio/video.
-   * @param positionUs The seek position in microseconds.
+   * @param positionUs             The seek position in microseconds.
    * @return Whether the in-buffer seek was successful.
    */
   private boolean seekInsideBufferUs(boolean[] trackIsAudioVideoFlags, long positionUs) {
@@ -991,7 +1003,9 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
     }
   }
 
-  /** Loads the media stream and extracts sample data from it. */
+  /**
+   * Loads the media stream and extracts sample data from it.
+   */
   /* package */ final class ExtractingLoadable implements Loadable, IcyDataSource.Listener {
 
     private final long loadTaskId;
@@ -1007,7 +1021,8 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
     private boolean pendingExtractorSeek;
     private long seekTimeUs;
     private DataSpec dataSpec;
-    @Nullable private TrackOutput icyTrackOutput;
+    @Nullable
+    private TrackOutput icyTrackOutput;
     private boolean seenIcyMetadata;
 
     @SuppressWarnings("nullness:method.invocation")
@@ -1139,7 +1154,9 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
     }
   }
 
-  /** Stores track state. */
+  /**
+   * Stores track state.
+   */
   private static final class TrackState {
 
     public final TrackGroupArray tracks;
@@ -1155,7 +1172,9 @@ import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
     }
   }
 
-  /** Identifies a track. */
+  /**
+   * Identifies a track.
+   */
   private static final class TrackId {
 
     public final int id;

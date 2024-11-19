@@ -17,6 +17,7 @@ package androidx.media3.extractor.ts;
 
 import static androidx.media3.extractor.ts.TsPayloadReader.FLAG_RANDOM_ACCESS_INDICATOR;
 
+import android.util.Log;
 import android.util.SparseArray;
 import androidx.annotation.Nullable;
 import androidx.media3.common.C;
@@ -41,7 +42,9 @@ import org.checkerframework.checker.nullness.qual.EnsuresNonNull;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
 import org.checkerframework.checker.nullness.qual.RequiresNonNull;
 
-/** Parses a continuous H264 byte stream and extracts individual frames. */
+/**
+ * Parses a continuous H264 byte stream and extracts individual frames.
+ */
 @UnstableApi
 public final class H264Reader implements ElementaryStreamReader {
 
@@ -71,11 +74,11 @@ public final class H264Reader implements ElementaryStreamReader {
   private final ParsableByteArray seiWrapper;
 
   /**
-   * @param seiReader An SEI reader for consuming closed caption channels.
+   * @param seiReader            An SEI reader for consuming closed caption channels.
    * @param allowNonIdrKeyframes Whether to treat samples consisting of non-IDR I slices as
-   *     synchronization samples (key-frames).
-   * @param detectAccessUnits Whether to split the input stream into access units (samples) based on
-   *     slice headers. Pass {@code false} if the stream contains access unit delimiters (AUDs).
+   *                             synchronization samples (key-frames).
+   * @param detectAccessUnits    Whether to split the input stream into access units (samples) based on
+   *                             slice headers. Pass {@code false} if the stream contains access unit delimiters (AUDs).
    */
   public H264Reader(SeiReader seiReader, boolean allowNonIdrKeyframes, boolean detectAccessUnits) {
     this.seiReader = seiReader;
@@ -128,6 +131,8 @@ public final class H264Reader implements ElementaryStreamReader {
 
     // Append the data to the buffer.
     totalBytesWritten += data.bytesLeft();
+    Log.e("@#", "sample " + output.toString() + " " + data.bytesLeft());
+
     output.sampleData(data, data.bytesLeft());
 
     // Scan the appended data, processing NAL units as they are encountered
@@ -168,6 +173,7 @@ public final class H264Reader implements ElementaryStreamReader {
 
   @Override
   public void packetFinished(boolean isEndOfInput) {
+    Log.i("@#", "packetFinished " + hashCode());
     assertTracksCreated();
     if (isEndOfInput) {
       sampleReader.end(totalBytesWritten);
@@ -267,7 +273,9 @@ public final class H264Reader implements ElementaryStreamReader {
     Util.castNonNull(sampleReader);
   }
 
-  /** Consumes a stream of NAL units and outputs samples. */
+  /**
+   * Consumes a stream of NAL units and outputs samples.
+   */
   private static final class SampleReader {
 
     private static final int DEFAULT_BUFFER_SIZE = 128;
@@ -337,9 +345,9 @@ public final class H264Reader implements ElementaryStreamReader {
       this.randomAccessIndicator = randomAccessIndicator;
       if ((allowNonIdrKeyframes && nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_NON_IDR)
           || (detectAccessUnits
-              && (nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_IDR
-                  || nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_NON_IDR
-                  || nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_PARTITION_A))) {
+          && (nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_IDR
+          || nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_NON_IDR
+          || nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_PARTITION_A))) {
         // Store the previous header and prepare to populate the new one.
         SliceHeaderData newSliceHeader = previousSliceHeader;
         previousSliceHeader = sliceHeader;
@@ -353,9 +361,9 @@ public final class H264Reader implements ElementaryStreamReader {
     /**
      * Called to pass stream data. The data passed should not include the 3 byte start code.
      *
-     * @param data Holds the data being passed.
+     * @param data   Holds the data being passed.
      * @param offset The offset of the data in {@code data}.
-     * @param limit The limit (exclusive) of the data in {@code data}.
+     * @param limit  The limit (exclusive) of the data in {@code data}.
      */
     public void appendToNalUnit(byte[] data, int offset, int limit) {
       if (!isFilling) {
@@ -532,7 +540,8 @@ public final class H264Reader implements ElementaryStreamReader {
       private boolean isComplete;
       private boolean hasSliceType;
 
-      @Nullable private SpsData spsData;
+      @Nullable
+      private SpsData spsData;
       private int nalRefIdc;
       private int sliceType;
       private int frameNum;
@@ -608,17 +617,17 @@ public final class H264Reader implements ElementaryStreamReader {
             || picParameterSetId != other.picParameterSetId
             || fieldPicFlag != other.fieldPicFlag
             || (bottomFieldFlagPresent
-                && other.bottomFieldFlagPresent
-                && bottomFieldFlag != other.bottomFieldFlag)
+            && other.bottomFieldFlagPresent
+            && bottomFieldFlag != other.bottomFieldFlag)
             || (nalRefIdc != other.nalRefIdc && (nalRefIdc == 0 || other.nalRefIdc == 0))
             || (spsData.picOrderCountType == 0
-                && otherSpsData.picOrderCountType == 0
-                && (picOrderCntLsb != other.picOrderCntLsb
-                    || deltaPicOrderCntBottom != other.deltaPicOrderCntBottom))
+            && otherSpsData.picOrderCountType == 0
+            && (picOrderCntLsb != other.picOrderCntLsb
+            || deltaPicOrderCntBottom != other.deltaPicOrderCntBottom))
             || (spsData.picOrderCountType == 1
-                && otherSpsData.picOrderCountType == 1
-                && (deltaPicOrderCnt0 != other.deltaPicOrderCnt0
-                    || deltaPicOrderCnt1 != other.deltaPicOrderCnt1))
+            && otherSpsData.picOrderCountType == 1
+            && (deltaPicOrderCnt0 != other.deltaPicOrderCnt0
+            || deltaPicOrderCnt1 != other.deltaPicOrderCnt1))
             || idrPicFlag != other.idrPicFlag
             || (idrPicFlag && idrPicId != other.idrPicId);
       }

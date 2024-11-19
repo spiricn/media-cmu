@@ -787,6 +787,7 @@ public abstract class DecoderVideoRenderer extends BaseRenderer {
         checkNotNull(decoder).queueInputBuffer(inputBuffer);
         buffersInCodecCount++;
         decoderReceivedBuffers = true;
+        Log.w("ppp", "queue 1");
         decoderCounters.queuedInputBufferCount++;
         this.inputBuffer = null;
         return true;

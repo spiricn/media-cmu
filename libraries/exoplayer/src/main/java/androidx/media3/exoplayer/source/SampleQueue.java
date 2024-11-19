@@ -52,11 +52,15 @@ import androidx.media3.exoplayer.upstream.Allocator;
 import androidx.media3.extractor.TrackOutput;
 import java.io.IOException;
 
-/** A queue of media samples. */
+/**
+ * A queue of media samples.
+ */
 @UnstableApi
 public class SampleQueue implements TrackOutput {
 
-  /** A listener for changes to the upstream format. */
+  /**
+   * A listener for changes to the upstream format.
+   */
   public interface UpstreamFormatChangedListener {
 
     /**
@@ -73,12 +77,17 @@ public class SampleQueue implements TrackOutput {
   private final SampleDataQueue sampleDataQueue;
   private final SampleExtrasHolder extrasHolder;
   private final SpannedData<SharedSampleMetadata> sharedSampleMetadata;
-  @Nullable private final DrmSessionManager drmSessionManager;
-  @Nullable private final DrmSessionEventListener.EventDispatcher drmEventDispatcher;
-  @Nullable private UpstreamFormatChangedListener upstreamFormatChangeListener;
+  @Nullable
+  private final DrmSessionManager drmSessionManager;
+  @Nullable
+  private final DrmSessionEventListener.EventDispatcher drmEventDispatcher;
+  @Nullable
+  private UpstreamFormatChangedListener upstreamFormatChangeListener;
 
-  @Nullable private Format downstreamFormat;
-  @Nullable private DrmSession currentDrmSession;
+  @Nullable
+  private Format downstreamFormat;
+  @Nullable
+  private DrmSession currentDrmSession;
 
   private int capacity;
   private long[] sourceIds;
@@ -100,8 +109,10 @@ public class SampleQueue implements TrackOutput {
   private boolean upstreamKeyframeRequired;
   private boolean upstreamFormatRequired;
   private boolean upstreamFormatAdjustmentRequired;
-  @Nullable private Format unadjustedUpstreamFormat;
-  @Nullable private Format upstreamFormat;
+  @Nullable
+  private Format unadjustedUpstreamFormat;
+  @Nullable
+  private Format upstreamFormat;
   private long upstreamSourceId;
   private boolean allSamplesAreSyncSamples;
   private boolean loggedUnexpectedNonSyncSample;
@@ -125,11 +136,11 @@ public class SampleQueue implements TrackOutput {
    * <p>For each sample added to the queue, a {@link DrmSession} will be attached containing the
    * keys needed to decrypt it.
    *
-   * @param allocator An {@link Allocator} from which allocations for sample data can be obtained.
-   * @param drmSessionManager The {@link DrmSessionManager} to obtain {@link DrmSession DrmSessions}
-   *     from. The created instance does not take ownership of this {@link DrmSessionManager}.
+   * @param allocator          An {@link Allocator} from which allocations for sample data can be obtained.
+   * @param drmSessionManager  The {@link DrmSessionManager} to obtain {@link DrmSession DrmSessions}
+   *                           from. The created instance does not take ownership of this {@link DrmSessionManager}.
    * @param drmEventDispatcher A {@link DrmSessionEventListener.EventDispatcher} to notify of events
-   *     related to this SampleQueue.
+   *                           related to this SampleQueue.
    */
   public static SampleQueue createWithDrm(
       Allocator allocator,
@@ -143,8 +154,8 @@ public class SampleQueue implements TrackOutput {
 
   /**
    * @deprecated Use {@link #createWithDrm(Allocator, DrmSessionManager, EventDispatcher)} instead.
-   *     The {@code playbackLooper} should be configured on the {@link DrmSessionManager} with
-   *     {@link DrmSessionManager#setPlayer(Looper, PlayerId)}.
+   * The {@code playbackLooper} should be configured on the {@link DrmSessionManager} with
+   * {@link DrmSessionManager#setPlayer(Looper, PlayerId)}.
    */
   @Deprecated
   public static SampleQueue createWithDrm(
@@ -180,20 +191,24 @@ public class SampleQueue implements TrackOutput {
     largestDiscardedTimestampUs = Long.MIN_VALUE;
     largestQueuedTimestampUs = Long.MIN_VALUE;
     upstreamFormatRequired = true;
-    upstreamKeyframeRequired = true;
+    upstreamKeyframeRequired = false;
     allSamplesAreSyncSamples = true;
   }
 
   // Called by the consuming thread when there is no loading thread.
 
-  /** Calls {@link #reset(boolean) reset(true)} and releases any resources owned by the queue. */
+  /**
+   * Calls {@link #reset(boolean) reset(true)} and releases any resources owned by the queue.
+   */
   @CallSuper
   public void release() {
     reset(/* resetUpstreamFormat= */ true);
     releaseDrmSessionReferences();
   }
 
-  /** Convenience method for {@code reset(false)}. */
+  /**
+   * Convenience method for {@code reset(false)}.
+   */
   public final void reset() {
     reset(/* resetUpstreamFormat= */ false);
   }
@@ -202,9 +217,9 @@ public class SampleQueue implements TrackOutput {
    * Clears all samples from the queue.
    *
    * @param resetUpstreamFormat Whether the upstream format should be cleared. If set to false,
-   *     samples queued after the reset (and before a subsequent call to {@link #format(Format)})
-   *     are assumed to have the current upstream format. If set to true, {@link #format(Format)}
-   *     must be called after the reset before any more samples can be queued.
+   *                            samples queued after the reset (and before a subsequent call to {@link #format(Format)})
+   *                            are assumed to have the current upstream format. If set to true, {@link #format(Format)}
+   *                            must be called after the reset before any more samples can be queued.
    */
   @CallSuper
   public void reset(boolean resetUpstreamFormat) {
@@ -213,7 +228,7 @@ public class SampleQueue implements TrackOutput {
     absoluteFirstIndex = 0;
     relativeFirstIndex = 0;
     readPosition = 0;
-    upstreamKeyframeRequired = true;
+    upstreamKeyframeRequired = false;
     startTimeUs = Long.MIN_VALUE;
     largestDiscardedTimestampUs = Long.MIN_VALUE;
     largestQueuedTimestampUs = Long.MIN_VALUE;
@@ -247,12 +262,16 @@ public class SampleQueue implements TrackOutput {
     upstreamSourceId = sourceId;
   }
 
-  /** Indicates samples that are subsequently queued should be spliced into those already queued. */
+  /**
+   * Indicates samples that are subsequently queued should be spliced into those already queued.
+   */
   public final void splice() {
     pendingSplice = true;
   }
 
-  /** Returns the current absolute write index. */
+  /**
+   * Returns the current absolute write index.
+   */
   public final int getWriteIndex() {
     return absoluteFirstIndex + length;
   }
@@ -261,7 +280,7 @@ public class SampleQueue implements TrackOutput {
    * Discards samples from the write side of the queue.
    *
    * @param discardFromIndex The absolute index of the first sample to be discarded. Must be in the
-   *     range [{@link #getReadIndex()}, {@link #getWriteIndex()}].
+   *                         range [{@link #getReadIndex()}, {@link #getWriteIndex()}].
    */
   public final void discardUpstreamSamples(int discardFromIndex) {
     sampleDataQueue.discardUpstreamSampleBytes(discardUpstreamSampleMetadata(discardFromIndex));
@@ -271,8 +290,8 @@ public class SampleQueue implements TrackOutput {
    * Discards samples from the write side of the queue.
    *
    * @param timeUs Samples will be discarded from the write end of the queue until a sample with a
-   *     timestamp smaller than timeUs is encountered (this sample is not discarded). Must be larger
-   *     than {@link #getLargestReadTimestampUs()}.
+   *               timestamp smaller than timeUs is encountered (this sample is not discarded). Must be larger
+   *               than {@link #getLargestReadTimestampUs()}.
    */
   public final void discardUpstreamFrom(long timeUs) {
     if (length == 0) {
@@ -285,7 +304,9 @@ public class SampleQueue implements TrackOutput {
 
   // Called by the consuming thread.
 
-  /** Calls {@link #discardToEnd()} and releases any resources owned by the queue. */
+  /**
+   * Calls {@link #discardToEnd()} and releases any resources owned by the queue.
+   */
   @CallSuper
   public void preRelease() {
     discardToEnd();
@@ -305,12 +326,16 @@ public class SampleQueue implements TrackOutput {
     }
   }
 
-  /** Returns the current absolute start index. */
+  /**
+   * Returns the current absolute start index.
+   */
   public final int getFirstIndex() {
     return absoluteFirstIndex;
   }
 
-  /** Returns the current absolute read index. */
+  /**
+   * Returns the current absolute read index.
+   */
   public final int getReadIndex() {
     return absoluteFirstIndex + readPosition;
   }
@@ -326,7 +351,9 @@ public class SampleQueue implements TrackOutput {
     return hasNextSample() ? sourceIds[relativeReadIndex] : upstreamSourceId;
   }
 
-  /** Returns the upstream {@link Format} in which samples are being queued. */
+  /**
+   * Returns the upstream {@link Format} in which samples are being queued.
+   */
   @Nullable
   public final synchronized Format getUpstreamFormat() {
     return upstreamFormatRequired ? null : upstreamFormat;
@@ -340,7 +367,7 @@ public class SampleQueue implements TrackOutput {
    * considered as having been queued.
    *
    * @return The largest sample timestamp that has been queued, or {@link Long#MIN_VALUE} if no
-   *     samples have been queued.
+   * samples have been queued.
    */
   public final synchronized long getLargestQueuedTimestampUs() {
     return largestQueuedTimestampUs;
@@ -350,7 +377,7 @@ public class SampleQueue implements TrackOutput {
    * Returns the largest sample timestamp that has been read since the last {@link #reset}.
    *
    * @return The largest sample timestamp that has been read, or {@link Long#MIN_VALUE} if no
-   *     samples have been read.
+   * samples have been read.
    */
   public final synchronized long getLargestReadTimestampUs() {
     return max(largestDiscardedTimestampUs, getLargestTimestamp(readPosition));
@@ -369,7 +396,9 @@ public class SampleQueue implements TrackOutput {
     return isLastSampleQueued;
   }
 
-  /** Returns the timestamp of the first sample, or {@link Long#MIN_VALUE} if the queue is empty. */
+  /**
+   * Returns the timestamp of the first sample, or {@link Long#MIN_VALUE} if the queue is empty.
+   */
   public final synchronized long getFirstTimestampUs() {
     return length == 0 ? Long.MIN_VALUE : timesUs[relativeFirstIndex];
   }
@@ -381,9 +410,9 @@ public class SampleQueue implements TrackOutput {
    * from {@link #read}. Hence an ended stream is always ready.
    *
    * @param loadingFinished Whether no more samples will be written to the sample queue. When true,
-   *     this method returns true if the sample queue is empty, because an empty sample queue means
-   *     the end of stream has been reached. When false, this method returns false if the sample
-   *     queue is empty.
+   *                        this method returns true if the sample queue is empty, because an empty sample queue means
+   *                        the end of stream has been reached. When false, this method returns false if the sample
+   *                        queue is empty.
    */
   @SuppressWarnings("ReferenceEquality") // See comments in setUpstreamFormat
   @CallSuper
@@ -406,17 +435,17 @@ public class SampleQueue implements TrackOutput {
    * <p>{@link Format Formats} read from this method may be associated to a {@link DrmSession}
    * through {@link FormatHolder#drmSession}.
    *
-   * @param formatHolder A {@link FormatHolder} to populate in the case of reading a format.
-   * @param buffer A {@link DecoderInputBuffer} to populate in the case of reading a sample or the
-   *     end of the stream. If the end of the stream has been reached, the {@link
-   *     C#BUFFER_FLAG_END_OF_STREAM} flag will be set on the buffer.
-   * @param readFlags Flags controlling the behavior of this read operation.
+   * @param formatHolder    A {@link FormatHolder} to populate in the case of reading a format.
+   * @param buffer          A {@link DecoderInputBuffer} to populate in the case of reading a sample or the
+   *                        end of the stream. If the end of the stream has been reached, the {@link
+   *                        C#BUFFER_FLAG_END_OF_STREAM} flag will be set on the buffer.
+   * @param readFlags       Flags controlling the behavior of this read operation.
    * @param loadingFinished True if an empty queue should be considered the end of the stream.
    * @return The result, which can be {@link C#RESULT_NOTHING_READ}, {@link C#RESULT_FORMAT_READ} or
-   *     {@link C#RESULT_BUFFER_READ}.
+   * {@link C#RESULT_BUFFER_READ}.
    * @throws InsufficientCapacityException If the {@code buffer} has insufficient capacity to hold
-   *     the data of a sample being read. The buffer {@link DecoderInputBuffer#timeUs timestamp} and
-   *     flags are populated if this exception is thrown, but the read position is not advanced.
+   *                                       the data of a sample being read. The buffer {@link DecoderInputBuffer#timeUs timestamp} and
+   *                                       flags are populated if this exception is thrown, but the read position is not advanced.
    */
   @CallSuper
   public int read(
@@ -424,6 +453,10 @@ public class SampleQueue implements TrackOutput {
       DecoderInputBuffer buffer,
       @ReadFlags int readFlags,
       boolean loadingFinished) {
+
+    Log.e("kkkk",
+        hashCode() + " read " + formatHolder.format + " " + readFlags + " .." + loadingFinished);
+
     int result =
         peekSampleMetadata(
             formatHolder,
@@ -431,6 +464,8 @@ public class SampleQueue implements TrackOutput {
             /* formatRequired= */ (readFlags & FLAG_REQUIRE_FORMAT) != 0,
             loadingFinished,
             extrasHolder);
+
+    Log.e("kkk", "--> " + result + " " + hashCode());
     if (result == C.RESULT_BUFFER_READ && !buffer.isEndOfStream()) {
       boolean peek = (readFlags & FLAG_PEEK) != 0;
       if ((readFlags & FLAG_OMIT_SAMPLE_DATA) == 0) {
@@ -469,9 +504,9 @@ public class SampleQueue implements TrackOutput {
    * <p>For formats where {@linkplain MimeTypes#allSamplesAreSyncSamples all samples are sync
    * samples}, it seeks the read position to the first sample at or after the specified time.
    *
-   * @param timeUs The time to seek to.
+   * @param timeUs                The time to seek to.
    * @param allowTimeBeyondBuffer Whether the operation can succeed if {@code timeUs} is beyond the
-   *     end of the queue, by seeking to the last sample (or keyframe).
+   *                              end of the queue, by seeking to the last sample (or keyframe).
    * @return Whether the seek was successful.
    */
   public final synchronized boolean seekTo(long timeUs, boolean allowTimeBeyondBuffer) {
@@ -485,7 +520,7 @@ public class SampleQueue implements TrackOutput {
     int offset =
         allSamplesAreSyncSamples
             ? findSampleAfter(
-                relativeReadIndex, length - readPosition, timeUs, allowTimeBeyondBuffer)
+            relativeReadIndex, length - readPosition, timeUs, allowTimeBeyondBuffer)
             : findSampleBefore(
                 relativeReadIndex, length - readPosition, timeUs, /* keyframe= */ true);
     if (offset == -1) {
@@ -500,9 +535,9 @@ public class SampleQueue implements TrackOutput {
    * Returns the number of samples that need to be {@link #skip(int) skipped} to advance the read
    * position to the keyframe before or at the specified time.
    *
-   * @param timeUs The time to advance to.
+   * @param timeUs          The time to advance to.
    * @param allowEndOfQueue Whether the end of the queue is considered a keyframe when {@code
-   *     timeUs} is larger than the largest queued timestamp.
+   *                        timeUs} is larger than the largest queued timestamp.
    * @return The number of samples that need to be skipped, which may be equal to 0.
    */
   public final synchronized int getSkipCount(long timeUs, boolean allowEndOfQueue) {
@@ -525,7 +560,7 @@ public class SampleQueue implements TrackOutput {
    * Advances the read position by the specified number of samples.
    *
    * @param count The number of samples to advance the read position by. Must be at least 0 and at
-   *     most {@link #getWriteIndex()} - {@link #getReadIndex()}.
+   *              most {@link #getWriteIndex()} - {@link #getReadIndex()}.
    */
   public final synchronized void skip(int count) {
     checkArgument(count >= 0 && readPosition + count <= length);
@@ -535,24 +570,28 @@ public class SampleQueue implements TrackOutput {
   /**
    * Discards up to but not including the sample immediately before or at the specified time.
    *
-   * @param timeUs The time to discard up to.
-   * @param toKeyframe If true then discards samples up to the keyframe before or at the specified
-   *     time, rather than any sample before or at that time.
+   * @param timeUs             The time to discard up to.
+   * @param toKeyframe         If true then discards samples up to the keyframe before or at the specified
+   *                           time, rather than any sample before or at that time.
    * @param stopAtReadPosition If true then samples are only discarded if they're before the read
-   *     position. If false then samples at and beyond the read position may be discarded, in which
-   *     case the read position is advanced to the first remaining sample.
+   *                           position. If false then samples at and beyond the read position may be discarded, in which
+   *                           case the read position is advanced to the first remaining sample.
    */
   public final void discardTo(long timeUs, boolean toKeyframe, boolean stopAtReadPosition) {
     sampleDataQueue.discardDownstreamTo(
         discardSampleMetadataTo(timeUs, toKeyframe, stopAtReadPosition));
   }
 
-  /** Discards up to but not including the read position. */
+  /**
+   * Discards up to but not including the read position.
+   */
   public final void discardToRead() {
     sampleDataQueue.discardDownstreamTo(discardSampleMetadataToRead());
   }
 
-  /** Discards all samples in the queue and advances the read position. */
+  /**
+   * Discards all samples in the queue and advances the read position.
+   */
   public final void discardToEnd() {
     sampleDataQueue.discardDownstreamTo(discardSampleMetadataToEnd());
   }
@@ -615,15 +654,26 @@ public class SampleQueue implements TrackOutput {
       int size,
       int offset,
       @Nullable CryptoData cryptoData) {
+
+
+
     if (upstreamFormatAdjustmentRequired) {
       format(Assertions.checkStateNotNull(unadjustedUpstreamFormat));
     }
 
+
     boolean isKeyframe = (flags & C.BUFFER_FLAG_KEY_FRAME) != 0;
+
+
+    Log.i("ggg",
+        hashCode() + " sample metadata upstreamKeyframeRequired=" + upstreamKeyframeRequired + " "
+            + "isKeyframe=" + isKeyframe);
+
     if (upstreamKeyframeRequired) {
-      if (!isKeyframe) {
-        return;
-      }
+//      if (!isKeyframe) {
+//        Log.i("ggg", hashCode() + " discard due to keyframe");
+//        return;
+//      }
       upstreamKeyframeRequired = false;
     }
 
@@ -632,6 +682,7 @@ public class SampleQueue implements TrackOutput {
       if (timeUs < startTimeUs) {
         // If we know that all samples are sync samples, we can discard those that come before the
         // start time on the write side of the queue.
+        Log.e("ggg", hashCode() + " discard " + timeUs + " <" + startTimeUs);
         return;
       }
       if ((flags & C.BUFFER_FLAG_KEY_FRAME) == 0) {
@@ -646,6 +697,7 @@ public class SampleQueue implements TrackOutput {
     }
     if (pendingSplice) {
       if (!isKeyframe || !attemptSplice(timeUs)) {
+        Log.e("ggg", hashCode() + " discard 2");
         return;
       }
       pendingSplice = false;
@@ -687,7 +739,9 @@ public class SampleQueue implements TrackOutput {
 
   // Internal methods.
 
-  /** Rewinds the read position to the first sample in the queue. */
+  /**
+   * Rewinds the read position to the first sample in the queue.
+   */
   private synchronized void rewind() {
     readPosition = 0;
     sampleDataQueue.rewind();
@@ -702,6 +756,8 @@ public class SampleQueue implements TrackOutput {
       SampleExtrasHolder extrasHolder) {
     buffer.waitingForKeys = false;
     if (!hasNextSample()) {
+      Log.e("@#", "kkk no next sample " + readPosition + " // " + length + " __" + hashCode());
+
       if (loadingFinished || isLastSampleQueued) {
         buffer.setFlags(C.BUFFER_FLAG_END_OF_STREAM);
         buffer.timeUs = C.TIME_END_OF_SOURCE;
@@ -714,15 +770,19 @@ public class SampleQueue implements TrackOutput {
       }
     }
 
+    Log.i("@#", "kk has next sample " + hashCode());
+
     Format format = sharedSampleMetadata.get(getReadIndex()).format;
     if (formatRequired || format != downstreamFormat) {
       onFormatResult(format, formatHolder);
+      Log.i("xxx",  hashCode() +  " read 1");
       return C.RESULT_FORMAT_READ;
     }
 
     int relativeReadIndex = getRelativeIndex(readPosition);
     if (!mayReadSample(relativeReadIndex)) {
       buffer.waitingForKeys = true;
+      Log.i("xxx",  hashCode() +  " read 2");
       return C.RESULT_NOTHING_READ;
     }
 
@@ -734,6 +794,8 @@ public class SampleQueue implements TrackOutput {
     extrasHolder.size = sizes[relativeReadIndex];
     extrasHolder.offset = offsets[relativeReadIndex];
     extrasHolder.cryptoData = cryptoDatas[relativeReadIndex];
+
+    Log.i("xxx",  hashCode() +  " read !");
 
     return C.RESULT_BUFFER_READ;
   }
@@ -805,6 +867,9 @@ public class SampleQueue implements TrackOutput {
       long offset,
       int size,
       @Nullable CryptoData cryptoData) {
+
+    Log.i("kkk", "COMMIT SAMPLE " + size + "      " + hashCode());
+
     if (length > 0) {
       // Ensure sample data doesn't overlap.
       int previousSampleRelativeIndex = getRelativeIndex(length - 1);
@@ -911,7 +976,7 @@ public class SampleQueue implements TrackOutput {
    * Sets the downstream format, performs DRM resource management, and populates the {@code
    * outputFormatHolder}.
    *
-   * @param newFormat The new downstream format.
+   * @param newFormat          The new downstream format.
    * @param outputFormatHolder The output {@link FormatHolder}.
    */
   private void onFormatResult(Format newFormat, FormatHolder outputFormatHolder) {
@@ -955,7 +1020,7 @@ public class SampleQueue implements TrackOutput {
     return currentDrmSession == null
         || currentDrmSession.getState() == DrmSession.STATE_OPENED_WITH_KEYS
         || ((flags[relativeReadIndex] & C.BUFFER_FLAG_ENCRYPTED) == 0
-            && currentDrmSession.playClearSamplesWithoutKeys());
+        && currentDrmSession.playClearSamplesWithoutKeys());
   }
 
   /**
@@ -964,11 +1029,11 @@ public class SampleQueue implements TrackOutput {
    * keyframe.
    *
    * @param relativeStartIndex The relative index from which to start searching.
-   * @param length The length of the range being searched.
-   * @param timeUs The specified time, in microseconds.
-   * @param keyframe Whether only keyframes should be considered.
+   * @param length             The length of the range being searched.
+   * @param timeUs             The specified time, in microseconds.
+   * @param keyframe           Whether only keyframes should be considered.
    * @return The offset from {@code relativeStartIndex} to the found sample, or -1 if no matching
-   *     sample was found.
+   * sample was found.
    */
   private int findSampleBefore(int relativeStartIndex, int length, long timeUs, boolean keyframe) {
     // This could be optimized to use a binary search, however in practice callers to this method
@@ -998,13 +1063,13 @@ public class SampleQueue implements TrackOutput {
    * Finds the offset of the first sample in the specified range that's at or after the specified
    * time.
    *
-   * @param relativeStartIndex The relative index from which to start searching.
-   * @param length The length of the range being searched.
-   * @param timeUs The specified time, in microseconds.
+   * @param relativeStartIndex    The relative index from which to start searching.
+   * @param length                The length of the range being searched.
+   * @param timeUs                The specified time, in microseconds.
    * @param allowTimeBeyondBuffer Whether {@code length} is returned if the {@code timeUs} is beyond
-   *     the last buffer in the specified range.
+   *                              the last buffer in the specified range.
    * @return The offset from {@code relativeStartIndex} to the found sample, -1 if no sample is at
-   *     or after the specified time.
+   * or after the specified time.
    */
   private int findSampleAfter(
       int relativeStartIndex, int length, long timeUs, boolean allowTimeBeyondBuffer) {
@@ -1108,16 +1173,22 @@ public class SampleQueue implements TrackOutput {
     return relativeIndex < capacity ? relativeIndex : relativeIndex - capacity;
   }
 
-  /** A holder for sample metadata not held by {@link DecoderInputBuffer}. */
+  /**
+   * A holder for sample metadata not held by {@link DecoderInputBuffer}.
+   */
   /* package */ static final class SampleExtrasHolder {
 
     public int size;
     public long offset;
-    @Nullable public CryptoData cryptoData;
+    @Nullable
+    public CryptoData cryptoData;
   }
 
-  /** A holder for metadata that applies to a span of contiguous samples. */
+  /**
+   * A holder for metadata that applies to a span of contiguous samples.
+   */
   private static final class SharedSampleMetadata {
+
     public final Format format;
     public final DrmSessionReference drmSessionReference;
 

@@ -44,9 +44,9 @@ public class DebugTextViewHelper {
   private boolean started;
 
   /**
-   * @param player The {@link ExoPlayer} from which debug information should be obtained. Only
-   *     players which are accessed on the main thread are supported ({@code
-   *     player.getApplicationLooper() == Looper.getMainLooper()}).
+   * @param player   The {@link ExoPlayer} from which debug information should be obtained. Only
+   *                 players which are accessed on the main thread are supported ({@code
+   *                 player.getApplicationLooper() == Looper.getMainLooper()}).
    * @param textView The {@link TextView} that should be updated to display the information.
    */
   public DebugTextViewHelper(ExoPlayer player, TextView textView) {
@@ -92,13 +92,17 @@ public class DebugTextViewHelper {
     textView.postDelayed(updater, REFRESH_INTERVAL_MS);
   }
 
-  /** Returns the debugging information string to be shown by the target {@link TextView}. */
+  /**
+   * Returns the debugging information string to be shown by the target {@link TextView}.
+   */
   @UnstableApi
   protected String getDebugString() {
     return getPlayerStateString() + getVideoString() + getAudioString();
   }
 
-  /** Returns a string containing player state debugging information. */
+  /**
+   * Returns a string containing player state debugging information.
+   */
   @UnstableApi
   protected String getPlayerStateString() {
     String playbackStateString;
@@ -124,7 +128,9 @@ public class DebugTextViewHelper {
         player.getPlayWhenReady(), playbackStateString, player.getCurrentMediaItemIndex());
   }
 
-  /** Returns a string containing video debugging information. */
+  /**
+   * Returns a string containing video debugging information.
+   */
   @UnstableApi
   protected String getVideoString() {
     Format format = player.getVideoFormat();
@@ -146,12 +152,14 @@ public class DebugTextViewHelper {
         + getDecoderCountersBufferCountString(decoderCounters)
         + " vfpo: "
         + getVideoFrameProcessingOffsetAverageString(
-            decoderCounters.totalVideoFrameProcessingOffsetUs,
-            decoderCounters.videoFrameProcessingOffsetCount)
+        decoderCounters.totalVideoFrameProcessingOffsetUs,
+        decoderCounters.videoFrameProcessingOffsetCount)
         + ")";
   }
 
-  /** Returns a string containing audio debugging information. */
+  /**
+   * Returns a string containing audio debugging information.
+   */
   @UnstableApi
   protected String getAudioString() {
     Format format = player.getAudioFormat();
@@ -176,18 +184,9 @@ public class DebugTextViewHelper {
       return "";
     }
     counters.ensureUpdated();
-    return " sib:"
-        + counters.skippedInputBufferCount
-        + " sb:"
-        + counters.skippedOutputBufferCount
-        + " rb:"
-        + counters.renderedOutputBufferCount
-        + " db:"
-        + counters.droppedBufferCount
-        + " mcdb:"
-        + counters.maxConsecutiveDroppedBufferCount
-        + " dk:"
-        + counters.droppedToKeyframeCount;
+    return " queued:"
+        + counters.queuedInputBufferCount + " init: " + counters.decoderInitCount + " release:"
+        + counters.decoderReleaseCount;
   }
 
   private static String getColorInfoString(@Nullable ColorInfo colorInfo) {

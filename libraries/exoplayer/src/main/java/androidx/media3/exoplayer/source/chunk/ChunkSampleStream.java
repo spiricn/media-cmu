@@ -151,6 +151,7 @@ public class ChunkSampleStream<T extends ChunkSource>
     sampleQueues[0] = primarySampleQueue;
 
     for (int i = 0; i < embeddedTrackCount; i++) {
+      Log.e("@#", "AAAAAAA");
       SampleQueue sampleQueue = SampleQueue.createWithoutDrm(allocator);
       embeddedSampleQueues[i] = sampleQueue;
       sampleQueues[i + 1] = sampleQueue;
