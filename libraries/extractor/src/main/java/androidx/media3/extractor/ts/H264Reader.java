@@ -516,11 +516,16 @@ public final class H264Reader implements ElementaryStreamReader {
     }
 
     private void setSampleIsKeyframe() {
+
       boolean treatIFrameAsKeyframe =
           allowNonIdrKeyframes ? sliceHeader.isISlice() : randomAccessIndicator;
       sampleIsKeyframe |=
           nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_IDR
               || (treatIFrameAsKeyframe && nalUnitType == NalUnitUtil.NAL_UNIT_TYPE_NON_IDR);
+
+      Log.w("www", "setSampleIsKeyframe allowNonIdrKeyframes=" + allowNonIdrKeyframes
+          + " sliceHeader.isISlice()=" + sliceHeader.isISlice() + " " + randomAccessIndicator + "="
+          + randomAccessIndicator + " nalUnitType" + nalUnitType + " result=" + sampleIsKeyframe);
     }
 
     private void outputSample(int offset) {
